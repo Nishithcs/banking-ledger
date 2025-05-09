@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	internal "github.com/Nishithcs/banking-ledger/pkg"
+	"github.com/Nishithcs/banking-ledger/pkg"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -32,7 +32,7 @@ type transactionResponse struct {
 // CreateTransaction creates a new HTTP handler for transaction requests
 // It takes a context, an AMQP channel, and a queue name for message publishing
 // Returns a gin.HandlerFunc that can be registered with the router
-func CreateTransaction(ctx context.Context, messageQueue internal.MessageQueue, queueName string) gin.HandlerFunc {
+func CreateTransaction(ctx context.Context, messageQueue pkg.MessageQueue, queueName string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var transactionRequestJson TransactionRequest
 		// Parse and validate the incoming JSON request
@@ -68,7 +68,7 @@ func CreateTransaction(ctx context.Context, messageQueue internal.MessageQueue, 
 // 1. Generating unique reference and transaction IDs
 // 2. Publishing the request to a message queue for asynchronous processing
 // 3. Returning a response with tracking information
-func (t *TransactionRequest) createTransaction(ctx context.Context, messageQueue internal.MessageQueue, queueName string) (transactionResponse, error) {
+func (t *TransactionRequest) createTransaction(ctx context.Context, messageQueue pkg.MessageQueue, queueName string) (transactionResponse, error) {
 
 	// Generate a unique transaction ID
 	transactionID := uuid.New().String()

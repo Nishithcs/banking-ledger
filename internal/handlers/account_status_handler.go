@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	internal "github.com/Nishithcs/banking-ledger/pkg"
+	"github.com/Nishithcs/banking-ledger/pkg"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,7 +15,7 @@ type AccountStatusResponse struct {
 }
 
 // GetAccountStatus handles requests to check account creation status
-func GetAccountStatus(ctx context.Context, database internal.Database, mongoDbClient internal.MongoDBClient) gin.HandlerFunc {
+func GetAccountStatus(ctx context.Context, database pkg.Database, mongoDbClient pkg.MongoDBClient) gin.HandlerFunc {
 	
 	return func(c *gin.Context) {
 		accountNumber := c.Param("accountNumber")

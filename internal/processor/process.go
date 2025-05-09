@@ -3,12 +3,12 @@ package processor
 import (
 	"time"
 
-	internal "github.com/Nishithcs/banking-ledger/pkg"
+	"github.com/Nishithcs/banking-ledger/pkg"
 )
 
 type ProcessWorker struct {
-	Database     internal.Database
-	MongoDbConn internal.MongoDBClient
+	Database     pkg.Database
+	MongoDbConn pkg.MongoDBClient
 }
 
 // Log the account creation transaction to Elasticsearch

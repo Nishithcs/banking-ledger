@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Nishithcs/banking-ledger/internal/processor"
-	internal "github.com/Nishithcs/banking-ledger/pkg"
+	"github.com/Nishithcs/banking-ledger/pkg"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -19,7 +19,7 @@ type TransactionHistoryItem struct {
 	TransactionType         string    `json:"type"`
 	Status                  string    `json:"status"`
 	Timestamp               time.Time `json:"timestamp"`
-	Balance float64   `json:"balance"`
+	Balance                 float64   `json:"balance"`
 	Description             string    `json:"description,omitempty"`
 }
 
@@ -31,7 +31,7 @@ type TransactionHistoryResponse struct {
 }
 
 // GetTransactions returns a handler for querying transaction history
-func GetTransactions(ctx context.Context, mongoDbClient internal.MongoDBClient) gin.HandlerFunc {
+func GetTransactions(ctx context.Context, mongoDbClient pkg.MongoDBClient) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accountNumber := c.Param("accountNumber")
 		if accountNumber == "" {

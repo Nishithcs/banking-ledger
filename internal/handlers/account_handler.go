@@ -8,7 +8,7 @@ import (
 	"time"
 	"math/rand"
 
-	internal "github.com/Nishithcs/banking-ledger/pkg"
+	"github.com/Nishithcs/banking-ledger/pkg"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -33,7 +33,7 @@ type accountResponse struct {
 // CreateAccount creates a new HTTP handler for account creation requests
 // It takes a context, an AMQP channel, and a queue name for message publishing
 // Returns a gin.HandlerFunc that can be registered with the router
-func CreateAccount(ctx context.Context, messageQueue internal.MessageQueue, queueName string) gin.HandlerFunc {
+func CreateAccount(ctx context.Context, messageQueue pkg.MessageQueue, queueName string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var accountRequestJson AccountRequest
 		// Parse and validate the incoming JSON request
@@ -69,13 +69,11 @@ func CreateAccount(ctx context.Context, messageQueue internal.MessageQueue, queu
 // 1. Generating a unique reference ID
 // 2. Publishing the request to a message queue for asynchronous processing
 // 3. Returning a response with tracking information
-func (a *AccountRequest) createAccount(ctx context.Context, messageQueue internal.MessageQueue, queueName string) (accountResponse, error) {
+func (a *AccountRequest) createAccount(ctx context.Context, messageQueue pkg.MessageQueue, queueName string) (accountResponse, error) {
 	// Generate a unique reference ID for tracking this request
 	a.ReferenceID = uuid.New().String()
 
-	// randomNumber := 1000000 + time.Now().UnixNano()%9000000
-	// a.AccountNumber = fmt.Sprintf("%s%07d", "BR1", randomNumber%10000000)
-
+	// Generate a unique account number
 	timestamp := time.Now().Unix()
 	rand.Seed(time.Now().UnixNano())
 	randomNumber := rand.Intn(10000) // 4 digits: 0000–9999

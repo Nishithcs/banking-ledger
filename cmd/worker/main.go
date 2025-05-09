@@ -25,8 +25,6 @@ func main() {
 	db := setupPostgres(ctx)
 	defer db.Close(ctx)
 
-
-
 	queueName := os.Getenv("RABBITMQ_QUEUE_NAME")
 	msgs, err := queue.Consume(queueName)
 	if err != nil {
@@ -91,15 +89,9 @@ func getWorkerCount() int {
 
 // ----------------- WORKER --------------------
 
-func startWorker(
-	ctx context.Context,
-	workerID int,
-	msgs <-chan []byte,
-	queueName string,
-	database pkg.Database,
-	mongoClient pkg.MongoDBClient,
-	wg *sync.WaitGroup,
-) {
+func startWorker(ctx context.Context, workerID int, msgs <-chan []byte, 
+	queueName string, database pkg.Database, mongoClient pkg.MongoDBClient, wg *sync.WaitGroup) {
+		
 	defer wg.Done()
 	log.Printf("Worker %d started", workerID)
 
