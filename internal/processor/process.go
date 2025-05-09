@@ -1,0 +1,25 @@
+package processor
+
+import (
+	"time"
+
+	internal "github.com/Nishithcs/banking-ledger/pkg"
+)
+
+type ProcessWorker struct {
+	PgxConn internal.PgDBConnection
+	EsConn  internal.ElasticsearchClient
+	MongoDbConn internal.MongoDBClient
+}
+
+// Log the account creation transaction to Elasticsearch
+type TransactionDocument struct {
+	TransactionID           string    `json:"transaction_id"  bson:"transaction_id"`
+	AccountNumber           string    `json:"account_number"  bson:"account_number"`
+	Amount                  float64   `json:"amount"  bson:"amount"`
+	Type                    string    `json:"type"  bson:"type"`
+	Status                  string    `json:"status"  bson:"status"`
+	Timestamp               time.Time `json:"timestamp"  bson:"timestamp"`
+	BranchCode              string    `json:"branch_code"  bson:"branch_code"`
+	BalanceAfterTransaction float64   `json:"balance_after_transaction"  bson:"balance_after_transaction"`
+}

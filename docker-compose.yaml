@@ -1,0 +1,120 @@
+services:
+  rabbitmq:
+    image: rabbitmq:4.0-management
+    ports:
+      - "5672:5672"  # AMQP port
+      - "15671:15672"  # Management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  postgres:
+    image: postgres:17
+    ports:
+      - "6000:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=banking
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  elasticsearch:
+    image: elasticsearch:8.17.1
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=myuser
+      - MONGO_INITDB_ROOT_PASSWORD=mypassword
+    volumes:
+      - mongodb_data:/data/db
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    # command: ["./cmd/api/api"]
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=banking
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # command: ["./cmd/worker/worker"]
+    volumes:
+      - '/home/mis/project/banking-ledger/cmd/workersss/worker:/app/cmd/workers/'
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=banking
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_QUEUE_NAME=account_creator
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - NUM_WORKERS=4
+
+  transaction_processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # command: ["./cmd/worker/worker"]
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=banking
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_QUEUE_NAME=transaction_processor
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - NUM_WORKERS=4
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui:latest
+    ports:
+      - "9090:8080"
+    environment:
+      - URL=banking-ledger/api/docs/openapi.yaml
+    volumes:
+      - ./:/usr/share/nginx/html/banking-ledger
+    restart: unless-stopped
+
+volumes:
+  rabbitmq_data:
+  postgres_data:
+  elasticsearch_data:
+  mongodb_data:
