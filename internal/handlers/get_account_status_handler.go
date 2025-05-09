@@ -15,7 +15,7 @@ type AccountStatusResponse struct {
 }
 
 // GetAccountStatusHandler handles requests to check account creation status
-func GetAccountStatusHandler(ctx context.Context, pgxConn internal.PgDBConnection, mongoDbClient internal.MongoDBClient) gin.HandlerFunc {
+func GetAccountStatusHandler(ctx context.Context, database internal.Database, mongoDbClient internal.MongoDBClient) gin.HandlerFunc {
 	
 	return func(c *gin.Context) {
 		accountNumber := c.Param("accountNumber")
@@ -33,7 +33,7 @@ func GetAccountStatusHandler(ctx context.Context, pgxConn internal.PgDBConnectio
 			AccountNumber: accountNumber,
 		}
 
-		tx, err := pgxConn.Begin(ctx)
+		tx, err := database.Begin(ctx)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{
 				"errorCode": http.StatusNotFound,

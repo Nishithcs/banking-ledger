@@ -3,167 +3,150 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"sync"
 
-	"fmt"
-
 	"github.com/Nishithcs/banking-ledger/internal/processor"
-	internal "github.com/Nishithcs/banking-ledger/pkg"
-	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/jackc/pgx/v5"
+	"github.com/Nishithcs/banking-ledger/pkg"
 )
 
 func main() {
-	// Create RabbitMQ connection
-	var queue internal.MessageQueue = &internal.RabbitMQ{}
+	ctx := context.Background()
 
-	err := queue.Connect("amqp://" + 
-	os.Getenv("RABBITMQ_USER") + ":" +
-	os.Getenv("RABBITMQ_PASSWORD") + "@" +
-	os.Getenv("RABBITMQ_HOST") + ":" +
-	os.Getenv("RABBITMQ_PORT") + "/")
-	if err != nil {
-		log.Fatalf("Failed to connect to message queue: %v", err)
-	}
+	// Setup dependencies
+	queue := setupRabbitMQ()
 	defer queue.Close()
-	
+
+	mongoClient := setupMongoDB(ctx)
+
+	db := setupPostgres(ctx)
+	defer db.Close(ctx)
+
+
 
 	queueName := os.Getenv("RABBITMQ_QUEUE_NAME")
-	log.Printf(queueName)
 	msgs, err := queue.Consume(queueName)
 	if err != nil {
-		log.Fatalf("Failed to consume: %v", err)
+		log.Fatalf("Failed to consume messages from queue: %v", err)
 	}
 
-	// urlExample := "postgres://username:password@localhost:5432/database_name"
-	conn, err := pgx.Connect(context.Background(), fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+	numWorkers := getWorkerCount()
+	wg := sync.WaitGroup{}
+
+	log.Printf(" [*] Starting %d workers for queue '%s'...", numWorkers, queueName)
+
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go startWorker(ctx, i, msgs, queueName, db, mongoClient, &wg)
+	}
+
+	wg.Wait()
+}
+
+// ----------------- INIT HELPERS --------------------
+
+// setupRabbitMQ initializes and returns a RabbitMQ connection
+func setupRabbitMQ() pkg.MessageQueue {
+	queue := &pkg.RabbitMQ{}
+	if err := queue.Connect(pkg.AmqpURL()); err != nil {
+		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
+	}
+	return queue
+}
+
+// setupMongoDB initializes and returns a MongoDB client
+func setupMongoDB(ctx context.Context) pkg.MongoDBClient {
+	client, err := pkg.NewMongoDBClient(ctx, "mongodb://myuser:mypassword@mongodb:27017", "bank")
+	if err != nil {
+		log.Fatalf("Failed to connect to MongoDB: %v", err)
+	}
+	return client
+}
+
+// setupPostgres initializes and returns a PostgreSQL connection
+func setupPostgres(ctx context.Context) pkg.Database {
+	var postgres pkg.Database = &pkg.PostgresDB{}
+	err := postgres.Connect(ctx, fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
 		os.Getenv("DB_NAME")))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
+	return postgres
+}
 
-	defer conn.Close(context.Background())
 
-	// Initialize Elasticsearch client
-	esConfig := elasticsearch.Config{
-		Addresses: []string{os.Getenv("ELASTICSEARCH_URL")},
+func getWorkerCount() int {
+	if val, err := strconv.Atoi(os.Getenv("NUM_WORKERS")); err == nil && val > 0 {
+		return val
 	}
+	return 4
+}
 
-	esClient, err := internal.NewElasticsearchClient(esConfig)
+// ----------------- WORKER --------------------
 
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error creating Elasticsearch client: %v\n", err)
-		os.Exit(1)
-	}
+func startWorker(
+	ctx context.Context,
+	workerID int,
+	msgs <-chan []byte,
+	queueName string,
+	database pkg.Database,
+	mongoClient pkg.MongoDBClient,
+	wg *sync.WaitGroup,
+) {
+	defer wg.Done()
+	log.Printf("Worker %d started", workerID)
 
-	// Test the connection
-	res, err := esClient.Info()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error connecting to Elasticsearch: %v\n", err)
-		os.Exit(1)
-	}
-	defer res.Body.Close()
+	for msg := range msgs {
+		log.Printf("Worker %d received message: %s", workerID, msg)
 
-	log.Println("Successfully connected to Elasticsearch")
-
-	// Elasticsearch completes
-
-	// MongoDB starts	
-	ctx := context.Background()
-	mongoDbClient, err := internal.NewMongoDBClient(ctx, "mongodb://myuser:mypassword@mongodb:27017", "bank")
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error creating MongoDB client: %v\n", err)
-		os.Exit(1)
-	}
-	// MongoDb completes
-
-	wg := sync.WaitGroup{}
-
-	wg.Add(1)
-	
-	// Start 4 worker goroutines
-	numWorkers := 4 // Default value
-	if workerCount, err := strconv.Atoi(os.Getenv("NUM_WORKERS")); err == nil && workerCount > 0 {
-		numWorkers = workerCount
-	}
-
-	for i := 0; i < numWorkers; i++ {
-		wg.Add(1)
-		
-		go func(workerID int, waitGroup *sync.WaitGroup) {
-			defer waitGroup.Done()
-			log.Printf("Worker %d started", workerID)
-			log.Printf(queueName)
-			
-			for msg := range msgs {
-				log.Printf("Worker %d received a message: %s", workerID, msg)
-				
-				switch os.Getenv("RABBITMQ_QUEUE_NAME") {
-				case "account_creator":
-					var accountInfo processor.AccountData
-					
-					err := json.Unmarshal(msg, &accountInfo)
-					
-					if err != nil {
-						log.Printf("Error: %s\n", err)
-						// msg.Ack(false)
-						continue
-					}
-					
-					processWorker := processor.CreateAccountProcessor{
-						ProcessWorker: processor.ProcessWorker{
-							PgxConn: conn,
-							EsConn:  esClient,
-							MongoDbConn: mongoDbClient,
-						},
-						Data: accountInfo,
-					}
-					
-					err = processWorker.CreateAccount(context.Background())
-					
-					if err != nil {
-						log.Println(err)
-					}
-					// msg.Ack(false)
-				case "transaction_processor":
-					var transactionInfo processor.TransactionData
-					err := json.Unmarshal(msg, &transactionInfo)
-					
-					if err != nil {
-						log.Println(err)
-						// msg.Ack(false)
-						continue
-					}
-					
-					processWorker := processor.TransactionProcessor{
-						ProcessWorker: processor.ProcessWorker{
-							PgxConn: conn,
-							EsConn:  esClient,
-							MongoDbConn: mongoDbClient,
-						},
-						Data: transactionInfo,
-					}
-					
-					err = processWorker.ProcessTransaction(context.Background())
-					if err != nil {
-						log.Println(err)
-					}
-					// msg.Ack(false)
-				}
+		switch queueName {
+		case "account_creator":
+			var account processor.AccountData
+			if err := json.Unmarshal(msg, &account); err != nil {
+				log.Printf("Worker %d: JSON decode error: %v", workerID, err)
+				continue
 			}
-		}(i, &wg)
+
+			processor := processor.CreateAccountProcessor{
+				ProcessWorker: processor.ProcessWorker{
+					Database:     database,
+					MongoDbConn:  mongoClient,
+				},
+				Data: account,
+			}
+
+			if err := processor.CreateAccount(ctx); err != nil {
+				log.Printf("Worker %d: Account creation failed: %v", workerID, err)
+			}
+
+		case "transaction_processor":
+			var txn processor.TransactionData
+			if err := json.Unmarshal(msg, &txn); err != nil {
+				log.Printf("Worker %d: JSON decode error: %v", workerID, err)
+				continue
+			}
+
+			processor := processor.TransactionProcessor{
+				ProcessWorker: processor.ProcessWorker{
+					Database:     database,
+					MongoDbConn:  mongoClient,
+				},
+				Data: txn,
+			}
+
+			if err := processor.ProcessTransaction(ctx); err != nil {
+				log.Printf("Worker %d: Transaction processing failed: %v", workerID, err)
+			}
+
+		default:
+			log.Printf("Worker %d: Unknown queue name '%s'", workerID, queueName)
+		}
 	}
-
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
-
-	wg.Wait()
 }

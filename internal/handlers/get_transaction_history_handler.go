@@ -19,7 +19,7 @@ type TransactionHistoryItem struct {
 	TransactionType         string    `json:"type"`
 	Status                  string    `json:"status"`
 	Timestamp               time.Time `json:"timestamp"`
-	BalanceAfterTransaction float64   `json:"updatedBalance"`
+	Balance float64   `json:"balance"`
 	Description             string    `json:"description,omitempty"`
 }
 
@@ -75,7 +75,7 @@ func GetTransactionHistoryHandler(ctx context.Context, mongoDbClient internal.Mo
 				TransactionType:         tx.Type,
 				Status:                  tx.Status,
 				Timestamp:               tx.Timestamp,
-				BalanceAfterTransaction: tx.BalanceAfterTransaction,
+				Balance: tx.Balance,
 			}
 
 			transactions = append(transactions, transactionHistoryItem)

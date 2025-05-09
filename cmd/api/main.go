@@ -3,19 +3,46 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/Nishithcs/banking-ledger/internal/handlers"
-	internal "github.com/Nishithcs/banking-ledger/pkg"
+	"github.com/Nishithcs/banking-ledger/pkg"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
 )
 
 func main() {
-	router := gin.Default()
+	// Standard Go context for graceful shutdowns and DB calls
+	ctx := context.Background()
 
-	// CORS middleware
+	// Initialize Gin router
+	router := setupRouter()
+
+	// Setup dependencies
+	queue := setupRabbitMQ()
+	defer queue.Close()
+
+	mongoClient := setupMongoDB(ctx)
+
+	db := setupPostgres(ctx)
+	defer db.Close(ctx)
+
+	// Register routes
+	router.POST("/createAccount", handlers.CreateAccountHandler(ctx, queue, "account_creator"))
+	router.POST("/transact", handlers.TransactionHandler(ctx, queue, "transaction_processor"))
+	router.GET("/account/:accountNumber/transactionHistory", handlers.GetTransactionHistoryHandler(ctx, mongoClient))
+	router.GET("/account/status/:accountNumber", handlers.GetAccountStatusHandler(ctx, db, mongoClient))
+
+	// Run the server
+	if err := router.Run(":8080"); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
+}
+
+// setupRouter initializes Gin with CORS config
+func setupRouter() *gin.Engine {
+	router := gin.Default()
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
@@ -23,50 +50,38 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
+	return router
+}
 
-	ctx := gin.Context{}
-
-	// Rabbitmq account creation
-	var queue internal.MessageQueue = &internal.RabbitMQ{}
-
-	err := queue.Connect(internal.AmqpURL())
-	if err != nil {
-		panic(err)
+// setupRabbitMQ initializes and returns a RabbitMQ connection
+func setupRabbitMQ() pkg.MessageQueue {
+	queue := &pkg.RabbitMQ{}
+	if err := queue.Connect(pkg.AmqpURL()); err != nil {
+		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
 	}
+	return queue
+}
 
-	defer queue.Close()
-
-	router.POST("/createAccount", handlers.CreateAccountHandler(&ctx, queue, "account_creator"))
-	router.POST("/transact", handlers.TransactionHandler(&ctx, queue, "transaction_processor"))
-
-
-	// MongoDB starts	
-	// ctx = context.Background()
-	mongoDbClient, err := internal.NewMongoDBClient(&ctx, "mongodb://myuser:mypassword@mongodb:27017", "bank")
-
+// setupMongoDB initializes and returns a MongoDB client
+func setupMongoDB(ctx context.Context) pkg.MongoDBClient {
+	client, err := pkg.NewMongoDBClient(ctx, "mongodb://myuser:mypassword@mongodb:27017", "bank")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error creating MongoDB client: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Failed to connect to MongoDB: %v", err)
 	}
+	return client
+}
 
-	// urlExample := "postgres://username:password@localhost:5432/database_name"
-	conn, err := pgx.Connect(context.Background(), fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+// setupPostgres initializes and returns a PostgreSQL connection
+func setupPostgres(ctx context.Context) pkg.Database {
+	var postgres pkg.Database = &pkg.PostgresDB{}
+	err := postgres.Connect(ctx, fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
 		os.Getenv("DB_NAME")))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
+		panic(err)
 	}
-
-	defer conn.Close(context.Background())
-
-
-	router.GET("/account/:accountNumber/transactionHistory", handlers.GetTransactionHistoryHandler(&ctx, mongoDbClient))
-
-	router.GET("/account/status/:accountNumber", handlers.GetAccountStatusHandler(&ctx, conn, mongoDbClient))
-
-	router.Run(":8080")
+	return postgres
 }

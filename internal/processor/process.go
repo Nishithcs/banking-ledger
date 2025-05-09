@@ -7,8 +7,7 @@ import (
 )
 
 type ProcessWorker struct {
-	PgxConn internal.PgDBConnection
-	EsConn  internal.ElasticsearchClient
+	Database     internal.Database
 	MongoDbConn internal.MongoDBClient
 }
 
@@ -20,5 +19,5 @@ type TransactionDocument struct {
 	Type                    string    `json:"type"  bson:"type"`
 	Status                  string    `json:"status"  bson:"status"`
 	Timestamp               time.Time `json:"timestamp"  bson:"timestamp"`
-	BalanceAfterTransaction float64   `json:"balance_after_transaction"  bson:"balance_after_transaction"`
+	Balance                 float64   `json:"balance"  bson:"balance"`
 }

@@ -39,7 +39,7 @@ func (p *CreateAccountProcessor) CreateAccount(ctx context.Context) error {
 	`
 
 	now := time.Now()
-	_, err := p.PgxConn.Exec(
+	err := p.Database.Exec(
 		ctx,
 		query,
 		p.Data.AccountNumber,
@@ -53,7 +53,6 @@ func (p *CreateAccountProcessor) CreateAccount(ctx context.Context) error {
 		return fmt.Errorf("failed to create account: %w", err)
 	}
 
-
 	transactionDoc := TransactionDocument{
 		TransactionID:           p.Data.ReferenceID,
 		AccountNumber:           p.Data.AccountNumber,
@@ -61,7 +60,7 @@ func (p *CreateAccountProcessor) CreateAccount(ctx context.Context) error {
 		Type:                    "DEPOSIT",
 		Status:                  "COMPLETED",
 		Timestamp:               now,
-		BalanceAfterTransaction: p.Data.InitialDeposit,
+		Balance: p.Data.InitialDeposit,
 	}
 
 	//Insert data to MongoDb

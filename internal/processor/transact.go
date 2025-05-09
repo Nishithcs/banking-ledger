@@ -23,7 +23,7 @@ type TransactionData struct {
 
 func (p *TransactionProcessor) transact(ctx context.Context) error {
 	// Start a transaction
-	tx, err := p.PgxConn.Begin(ctx)
+	tx, err := p.Database.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
@@ -65,7 +65,7 @@ func (p *TransactionProcessor) transact(ctx context.Context) error {
 
 	// Update account balance
 	updateQuery := `UPDATE accounts SET balance = $1 WHERE account_number = $2`
-	_, err = tx.Exec(ctx, updateQuery, newBalance, p.Data.AccountNumber)
+	err = tx.Exec(ctx, updateQuery, newBalance, p.Data.AccountNumber)
 	if err != nil {
 		return fmt.Errorf("failed to update account balance: %w", err)
 	}
@@ -94,7 +94,7 @@ func (p *TransactionProcessor) ProcessTransaction(ctx context.Context) error {
 		TransactionID: p.Data.TransactionID,
 		Timestamp:     time.Now(),
 		Status:        status,
-		BalanceAfterTransaction: p.Data.AvailableBalance,
+		Balance: p.Data.AvailableBalance,
 	}
 
 	//Insert data to MongoDb
