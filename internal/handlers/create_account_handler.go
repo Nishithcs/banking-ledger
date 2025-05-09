@@ -76,14 +76,12 @@ func (a *AccountRequest) createAccount(ctx context.Context, messageQueue interna
 	// randomNumber := 1000000 + time.Now().UnixNano()%9000000
 	// a.AccountNumber = fmt.Sprintf("%s%07d", "BR1", randomNumber%10000000)
 
-    timestamp := time.Now().Unix() // This gives the number of seconds since Unix epoch (1970-01-01)
-
-    // Generate a random number between 0 and 9999
-    rand.Seed(time.Now().UnixNano()) // Seed the random number generator
-    randomNumber := rand.Intn(10000) // Random number between 0 and 9999
-
-    // Combine the timestamp and random number (truncate to ensure 10 digits)
-    a.AccountNumber = fmt.Sprintf("%08d%04d", timestamp%100000000, randomNumber) // Last 8 digits of timestamp + 4 digits of random number
+	timestamp := time.Now().Unix()
+	rand.Seed(time.Now().UnixNano())
+	randomNumber := rand.Intn(10000) // 4 digits: 0000–9999
+	
+	// 10 digits = last 6 of timestamp + 4-digit random
+	a.AccountNumber= fmt.Sprintf("%06d%04d", timestamp%1000000, randomNumber)
 
 	// Create JSON payload
 	requestByteArray, err := json.Marshal(a)

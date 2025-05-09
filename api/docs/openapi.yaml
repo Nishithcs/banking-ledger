@@ -29,16 +29,15 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /account/status/{referenceId}:
+  /account/status/{accountNumber}:
     get:
       summary: Get account creation status and account number
       parameters:
-        - name: referenceId
+        - name: accountNumber
           in: path
           required: true
           schema:
             type: string
-            format: uuid
             description: Reference ID received during account creation
       responses:
         "200":
@@ -88,14 +87,6 @@ paths:
             type: string
             example: BR11234567
             description: Account number for which to retrieve transaction history
-        - name: pageNumber
-          in: query
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Page number for paginated results
       responses:
         "200":
           description: Transaction history retrieved
@@ -134,7 +125,6 @@ components:
       required:
         - accountHolderName
         - initialDeposit
-        - branchCode
       properties:
         accountHolderName:
           type: string
@@ -144,10 +134,6 @@ components:
           format: double
           minimum: 0
           example: 1000.00
-        branchCode:
-          type: string
-          example: "BR1"
-          description: 3-character branch code unique for each bank branch
 
     AccountResponse:
       type: object

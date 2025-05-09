@@ -15,11 +15,12 @@ type AccountStatusResponse struct {
 }
 
 // GetAccountStatusHandler handles requests to check account creation status
-func GetAccountStatusHandler(ctx context.Context, pgxConn internal.PgDBConnection, esClient internal.ElasticsearchClient, mongoDbClient internal.MongoDBClient) gin.HandlerFunc {
+func GetAccountStatusHandler(ctx context.Context, pgxConn internal.PgDBConnection, mongoDbClient internal.MongoDBClient) gin.HandlerFunc {
+	
 	return func(c *gin.Context) {
-		referenceID := c.Param("referenceId")
 		accountNumber := c.Param("accountNumber")
-		if referenceID == "" {
+
+		if accountNumber == "" {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"errorCode": http.StatusBadRequest,
 				"error":     "Reference ID is required",
@@ -27,86 +28,10 @@ func GetAccountStatusHandler(ctx context.Context, pgxConn internal.PgDBConnectio
 			return
 		}
 
-		// // Construct Elasticsearch query
-		// query := map[string]interface{}{
-		// 	"query": map[string]interface{}{
-		// 		"match": map[string]interface{}{
-		// 			"transaction_id": referenceID,
-		// 		},
-		// 	},
-		// }
-
-		// // Convert query to bytes
-		// var buf bytes.Buffer
-		// if err := json.NewEncoder(&buf).Encode(query); err != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"errorCode": http.StatusInternalServerError,
-		// 		"error":     "Failed to construct search query",
-		// 	})
-		// 	return
-		// }
-
-		// // Search in Elasticsearch
-		// res, err := esClient.Search([]string{"bank-transactions-*"}, &buf)
-		// if err != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"errorCode": http.StatusInternalServerError,
-		// 		"error":     "Failed to search account status",
-		// 	})
-		// 	return
-		// }
-		// defer res.Body.Close()
-
-		// if res.IsError() {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"errorCode": http.StatusInternalServerError,
-		// 		"error":     "Error response from Elasticsearch",
-		// 	})
-		// 	return
-		// }
-
-		// // Parse the response
-		// var result map[string]interface{}
-		// if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"errorCode": http.StatusInternalServerError,
-		// 		"error":     "Failed to parse search results",
-		// 	})
-		// 	return
-		// }
-
-		// // Check if any hits were found
-		// hits := result["hits"].(map[string]interface{})
-		// if hits["total"].(map[string]interface{})["value"].(float64) == 0 {
-		// 	c.JSON(http.StatusNotFound, gin.H{
-		// 		"errorCode": http.StatusNotFound,
-		// 		"error":     "Account creation request not found",
-		// 	})
-		// 	return
-		// }
-
-		// // Get the first hit
-		// hit := hits["hits"].([]interface{})[0].(map[string]interface{})
-		// source := hit["_source"].(map[string]interface{})
-
 		// Construct response
 		response := AccountStatusResponse{
 			AccountNumber: accountNumber,
 		}
-
-		// if source["status"] == "COMPLETED" {
-		// 	response.Status = "ACTIVE"
-		// } else {
-		// 	response.Status = "INACTIVE"
-		// }
-
-		// // Add account number if status is ACTIVE
-		// if response.Status == "ACTIVE" {
-		// 	response.AccountNumber = source["account_number"].(string)
-		// }
-
-
-		// Get current account balance
 
 		tx, err := pgxConn.Begin(ctx)
 		if err != nil {
@@ -118,19 +43,20 @@ func GetAccountStatusHandler(ctx context.Context, pgxConn internal.PgDBConnectio
 		defer tx.Rollback(ctx) // Will be ignored if transaction is committed
 
 		var status string
-		query := `SELECT status FROM accounts 
-		WHERE account_number = $1 FOR UPDATE;`
+
+		// We will use the FOR UPDATE to avoid race conditions on the row.
+		query := `SELECT status FROM accounts WHERE account_number = $1 FOR UPDATE;`
 
 		err = tx.QueryRow(ctx, query, accountNumber).Scan(&status)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{
 				"errorCode": http.StatusNotFound,
 				"error":     "Account creation request not found",
+				"account_number": accountNumber,
 			})
 		}
 		response.Status = status
 
-		
 		c.JSON(http.StatusOK, response)
 	}
 }

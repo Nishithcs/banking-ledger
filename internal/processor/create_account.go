@@ -31,12 +31,11 @@ func (p *CreateAccountProcessor) CreateAccount(ctx context.Context) error {
 	query := `
 		INSERT INTO accounts (
 			account_number, 
-			account_holder_name, 
-			available_balance, 
-			branch_code, 
+			name, 
+			balance, 
 			status,
 			created_at
-		) VALUES ($1, $2, $3, $4, $5, $6)
+		) VALUES ($1, $2, $3, $4, $5)
 	`
 
 	now := time.Now()
@@ -64,27 +63,6 @@ func (p *CreateAccountProcessor) CreateAccount(ctx context.Context) error {
 		Timestamp:               now,
 		BalanceAfterTransaction: p.Data.InitialDeposit,
 	}
-
-	// // Create index name with date format for better data management
-	// indexName := fmt.Sprintf("bank-transactions-%s", now.Format("2006-01-02"))
-
-	// // Index the transaction document
-	// transactionDocJSON, err := json.Marshal(transactionDoc)
-	// if err != nil {
-	// 	panic(fmt.Sprintf("failed to marshal JSON: %v", err))
-	// }
-
-	
-	// // Insert data to Elasticsearch
-	// req := strings.NewReader(string(transactionDocJSON))
-	// res, err := p.EsConn.Index(indexName, req)
-	// if err != nil {
-	// 	// Log the error but don't fail the account creation
-	// 	log.Printf("Failed to index transaction in Elasticsearch: %v", err)
-	// }
-	// if res != nil {
-	// 	defer res.Body.Close()
-	// }
 
 	//Insert data to MongoDb
 	_, err = p.MongoDbConn.Insert(ctx, "transactions", transactionDoc)

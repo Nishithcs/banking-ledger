@@ -7,7 +7,6 @@ import (
 
 	"github.com/Nishithcs/banking-ledger/internal/handlers"
 	internal "github.com/Nishithcs/banking-ledger/pkg"
-	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -40,15 +39,6 @@ func main() {
 	router.POST("/createAccount", handlers.CreateAccountHandler(&ctx, queue, "account_creator"))
 	router.POST("/transact", handlers.TransactionHandler(&ctx, queue, "transaction_processor"))
 
-	// Initialize Elasticsearch client
-	esConfig := elasticsearch.Config{
-		Addresses: []string{os.Getenv("ELASTICSEARCH_URL")},
-	}
-
-	esClient, err := internal.NewElasticsearchClient(esConfig)
-	if err != nil {
-		panic(fmt.Sprintf("Error creating Elasticsearch client: %s", err))
-	}
 
 	// MongoDB starts	
 	// ctx = context.Background()
@@ -58,15 +48,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error creating MongoDB client: %v\n", err)
 		os.Exit(1)
 	}
-	// MongoDb completes
-
-	// Test the connection
-	res, err := esClient.Info()
-	if err != nil {
-		panic(fmt.Sprintf("Error getting Elasticsearch info: %s", err))
-	}
-	defer res.Body.Close()
-
 
 	// urlExample := "postgres://username:password@localhost:5432/database_name"
 	conn, err := pgx.Connect(context.Background(), fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
@@ -83,9 +64,9 @@ func main() {
 	defer conn.Close(context.Background())
 
 
-	router.GET("/account/:accountNumber/transactionHistory", handlers.GetTransactionHistoryHandler(&ctx, esClient, mongoDbClient))
+	router.GET("/account/:accountNumber/transactionHistory", handlers.GetTransactionHistoryHandler(&ctx, mongoDbClient))
 
-	router.GET("/account/status/:referenceId", handlers.GetAccountStatusHandler(&ctx, conn, esClient, mongoDbClient))
+	router.GET("/account/status/:accountNumber", handlers.GetAccountStatusHandler(&ctx, conn, mongoDbClient))
 
 	router.Run(":8080")
 }

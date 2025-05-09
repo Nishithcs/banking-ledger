@@ -17,7 +17,7 @@ type TransactionData struct {
 	AccountNumber     string  `json:"accountNumber"`
 	Amount            float64 `json:"amount"`
 	AvailableBalance  float64 `json:"availableBalance"`
-	Type              string  `json:"type"` // "DEPOSIT" or "WITHDRAWAL"
+	Type              string  `json:"type"`
 	TransactionID     string  `json:"transactionId"`
 }
 
@@ -31,7 +31,7 @@ func (p *TransactionProcessor) transact(ctx context.Context) error {
 
 	// Get current account balance
 	var currentBalance float64
-	query := `SELECT available_balance FROM accounts 
+	query := `SELECT balance FROM accounts 
 	WHERE account_number = $1 AND status='ACTIVE' FOR UPDATE;`
 
 	err = tx.QueryRow(ctx, query, p.Data.AccountNumber).Scan(&currentBalance)
@@ -64,7 +64,7 @@ func (p *TransactionProcessor) transact(ctx context.Context) error {
 	p.Data.AvailableBalance = newBalance
 
 	// Update account balance
-	updateQuery := `UPDATE accounts SET available_balance = $1 WHERE account_number = $2`
+	updateQuery := `UPDATE accounts SET balance = $1 WHERE account_number = $2`
 	_, err = tx.Exec(ctx, updateQuery, newBalance, p.Data.AccountNumber)
 	if err != nil {
 		return fmt.Errorf("failed to update account balance: %w", err)
@@ -96,26 +96,6 @@ func (p *TransactionProcessor) ProcessTransaction(ctx context.Context) error {
 		Status:        status,
 		BalanceAfterTransaction: p.Data.AvailableBalance,
 	}
-
-	// // Create index name with date format for better data management
-	// indexName := fmt.Sprintf("bank-transactions-%s", time.Now().Format("2006-01-02"))
-
-	// // Index the transaction document
-	// transactionDocJSON, err := json.Marshal(transactionDoc)
-	// if err != nil {
-	// 	panic(fmt.Sprintf("failed to marshal JSON: %v", err))
-	// }
-
-	// req := strings.NewReader(string(transactionDocJSON))
-	// res, err := p.EsConn.Index(indexName, req)
-	// if err != nil {
-	// 	// Log the error but don't fail the account creation
-	// 	log.Printf("Failed to index transaction in Elasticsearch: %v", err)
-	// }
-
-	// if res != nil {
-	// 	defer res.Body.Close()
-	// }
 
 	//Insert data to MongoDb
 	_, err = p.MongoDbConn.Insert(ctx, "transactions", transactionDoc)
