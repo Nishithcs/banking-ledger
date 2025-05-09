@@ -30,8 +30,8 @@ type TransactionHistoryResponse struct {
 	TotalCount    int                      `json:"totalCount"`
 }
 
-// GetTransactionHistoryHandler returns a handler for querying transaction history
-func GetTransactionHistoryHandler(ctx context.Context, mongoDbClient internal.MongoDBClient) gin.HandlerFunc {
+// GetTransactions returns a handler for querying transaction history
+func GetTransactions(ctx context.Context, mongoDbClient internal.MongoDBClient) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accountNumber := c.Param("accountNumber")
 		if accountNumber == "" {

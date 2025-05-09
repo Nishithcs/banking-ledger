@@ -8,7 +8,7 @@ servers:
     description: Local server
 
 paths:
-  /createAccount:
+  /accounts:
     post:
       summary: Create a new bank account
       requestBody:
@@ -29,7 +29,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /account/status/{accountNumber}:
+  /account/{accountNumber}/status:
     get:
       summary: Get account creation status and account number
       parameters:
@@ -53,7 +53,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /transact:
+  /transactions:
     post:
       summary: Process a transaction
       requestBody:
@@ -76,7 +76,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /account/{accountNumber}/transactionHistory:
+  /accounts/{accountNumber}/transactions:
     get:
       summary: Get transaction history for an account
       parameters:

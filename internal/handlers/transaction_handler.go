@@ -29,10 +29,10 @@ type transactionResponse struct {
 	CreatedAt     time.Time `json:"createdAt"`     // Timestamp when the transaction request was processed
 }
 
-// TransactionHandler creates a new HTTP handler for transaction requests
+// CreateTransaction creates a new HTTP handler for transaction requests
 // It takes a context, an AMQP channel, and a queue name for message publishing
 // Returns a gin.HandlerFunc that can be registered with the router
-func TransactionHandler(ctx context.Context, messageQueue internal.MessageQueue, queueName string) gin.HandlerFunc {
+func CreateTransaction(ctx context.Context, messageQueue internal.MessageQueue, queueName string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var transactionRequestJson TransactionRequest
 		// Parse and validate the incoming JSON request

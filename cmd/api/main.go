@@ -29,10 +29,10 @@ func main() {
 	defer db.Close(ctx)
 
 	// Register routes
-	router.POST("/createAccount", handlers.CreateAccountHandler(ctx, queue, "account_creator"))
-	router.POST("/transact", handlers.TransactionHandler(ctx, queue, "transaction_processor"))
-	router.GET("/account/:accountNumber/transactionHistory", handlers.GetTransactionHistoryHandler(ctx, mongoClient))
-	router.GET("/account/status/:accountNumber", handlers.GetAccountStatusHandler(ctx, db, mongoClient))
+	router.POST("/accounts", handlers.CreateAccount(ctx, queue, "account_creator"))
+	router.POST("/transactions", handlers.CreateTransaction(ctx, queue, "transaction_processor"))
+	router.GET("/accounts/:accountNumber/transactions", handlers.GetTransactions(ctx, mongoClient))
+	router.GET("/account/:accountNumber/status", handlers.GetAccountStatus(ctx, db, mongoClient))
 
 	// Run the server
 	if err := router.Run(":8080"); err != nil {

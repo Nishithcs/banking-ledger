@@ -14,8 +14,8 @@ type AccountStatusResponse struct {
 	AccountNumber string `json:"accountNumber,omitempty"`
 }
 
-// GetAccountStatusHandler handles requests to check account creation status
-func GetAccountStatusHandler(ctx context.Context, database internal.Database, mongoDbClient internal.MongoDBClient) gin.HandlerFunc {
+// GetAccountStatus handles requests to check account creation status
+func GetAccountStatus(ctx context.Context, database internal.Database, mongoDbClient internal.MongoDBClient) gin.HandlerFunc {
 	
 	return func(c *gin.Context) {
 		accountNumber := c.Param("accountNumber")

@@ -30,10 +30,10 @@ type accountResponse struct {
 	CreatedAt   time.Time `json:"createdAt"`   // Timestamp when the account creation request was processed
 }
 
-// CreateAccountHandler creates a new HTTP handler for account creation requests
+// CreateAccount creates a new HTTP handler for account creation requests
 // It takes a context, an AMQP channel, and a queue name for message publishing
 // Returns a gin.HandlerFunc that can be registered with the router
-func CreateAccountHandler(ctx context.Context, messageQueue internal.MessageQueue, queueName string) gin.HandlerFunc {
+func CreateAccount(ctx context.Context, messageQueue internal.MessageQueue, queueName string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var accountRequestJson AccountRequest
 		// Parse and validate the incoming JSON request
