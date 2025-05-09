@@ -25,34 +25,6 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	// // Create RabbitMQ connection
-	// aqmpConn, err := internal.CreateAMQPConnection(
-	// 	"amqp://" +
-	// 		os.Getenv("RABBITMQ_USER") + ":" +
-	// 		os.Getenv("RABBITMQ_PASSWORD") + "@" +
-	// 		os.Getenv("RABBITMQ_HOST") + ":" +
-	// 		os.Getenv("RABBITMQ_PORT") + "/")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// defer internal.CloseAMQPConnection(aqmpConn)
-
-	// ctx := gin.Context{}
-
-	// amqpChannel, err := aqmpConn.Channel()
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// defer internal.CloseAMQPChannel(amqpChannel)
-
-	// // Declare queue
-	// createAccountQueue, err := internal.QueueDeclare(amqpChannel, "account_creator", true, false, false, false)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
 	ctx := gin.Context{}
 
 	// Rabbitmq account creation
@@ -64,7 +36,6 @@ func main() {
 	}
 
 	defer queue.Close()
-	// Done
 
 	router.POST("/createAccount", handlers.CreateAccountHandler(&ctx, queue, "account_creator"))
 	router.POST("/transact", handlers.TransactionHandler(&ctx, queue, "transaction_processor"))

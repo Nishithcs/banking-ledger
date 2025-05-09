@@ -20,6 +20,5 @@ type TransactionDocument struct {
 	Type                    string    `json:"type"  bson:"type"`
 	Status                  string    `json:"status"  bson:"status"`
 	Timestamp               time.Time `json:"timestamp"  bson:"timestamp"`
-	BranchCode              string    `json:"branch_code"  bson:"branch_code"`
 	BalanceAfterTransaction float64   `json:"balance_after_transaction"  bson:"balance_after_transaction"`
 }

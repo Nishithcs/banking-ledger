@@ -19,7 +19,6 @@ type TransactionData struct {
 	AvailableBalance  float64 `json:"availableBalance"`
 	Type              string  `json:"type"` // "DEPOSIT" or "WITHDRAWAL"
 	TransactionID     string  `json:"transactionId"`
-	BranchCode        string  `json:"branchCode"`
 }
 
 func (p *TransactionProcessor) transact(ctx context.Context) error {
@@ -32,16 +31,14 @@ func (p *TransactionProcessor) transact(ctx context.Context) error {
 
 	// Get current account balance
 	var currentBalance float64
-	var branchCode string
-	query := `SELECT available_balance, branch_code FROM accounts 
+	query := `SELECT available_balance FROM accounts 
 	WHERE account_number = $1 AND status='ACTIVE' FOR UPDATE;`
 
-	err = tx.QueryRow(ctx, query, p.Data.AccountNumber).Scan(&currentBalance, &branchCode)
+	err = tx.QueryRow(ctx, query, p.Data.AccountNumber).Scan(&currentBalance)
 	if err != nil {
 		return fmt.Errorf("failed to get account balance: %w", err)
 	}
 
-	p.Data.BranchCode = branchCode
 	p.Data.AvailableBalance = currentBalance
 
 	// Calculate new balance based on transaction type
@@ -96,7 +93,6 @@ func (p *TransactionProcessor) ProcessTransaction(ctx context.Context) error {
 		Amount:        p.Data.Amount,
 		TransactionID: p.Data.TransactionID,
 		Timestamp:     time.Now(),
-		BranchCode:    p.Data.BranchCode,
 		Status:        status,
 		BalanceAfterTransaction: p.Data.AvailableBalance,
 	}

@@ -17,7 +17,6 @@ type AccountData struct {
 	AccountNumber     string  `json:"accountNumber"`
 	AccountHolderName string  `json:"accountHolderName"`
 	InitialDeposit    float64 `json:"initialDeposit"`
-	BranchCode        string  `json:"branchCode"`
 	ReferenceID       string  `json:"referenceID"`
 }
 
@@ -28,9 +27,6 @@ func (p *CreateAccountProcessor) CreateAccount(ctx context.Context) error {
 	if p.Data.InitialDeposit < 0 {
 		return fmt.Errorf("initial Deposit cannot be negative")
 	}
-
-	// randomNumber := 1000000 + time.Now().UnixNano()%9000000
-	// p.Data.AccountNumber = fmt.Sprintf("%s%07d", p.Data.BranchCode, randomNumber%10000000)
 
 	query := `
 		INSERT INTO accounts (
@@ -50,7 +46,6 @@ func (p *CreateAccountProcessor) CreateAccount(ctx context.Context) error {
 		p.Data.AccountNumber,
 		p.Data.AccountHolderName,
 		p.Data.InitialDeposit,
-		p.Data.BranchCode,
 		"ACTIVE",
 		now,
 	)
@@ -59,6 +54,7 @@ func (p *CreateAccountProcessor) CreateAccount(ctx context.Context) error {
 		return fmt.Errorf("failed to create account: %w", err)
 	}
 
+
 	transactionDoc := TransactionDocument{
 		TransactionID:           p.Data.ReferenceID,
 		AccountNumber:           p.Data.AccountNumber,
@@ -66,7 +62,6 @@ func (p *CreateAccountProcessor) CreateAccount(ctx context.Context) error {
 		Type:                    "DEPOSIT",
 		Status:                  "COMPLETED",
 		Timestamp:               now,
-		BranchCode:              p.Data.BranchCode,
 		BalanceAfterTransaction: p.Data.InitialDeposit,
 	}
 

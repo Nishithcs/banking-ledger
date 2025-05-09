@@ -18,50 +18,6 @@ import (
 
 func main() {
 	// Create RabbitMQ connection
-	// aqmpConn, err := internal.CreateAMQPConnection(
-	// 	"amqp://" +
-	// 		os.Getenv("RABBITMQ_USER") + ":" +
-	// 		os.Getenv("RABBITMQ_PASSWORD") + "@" +
-	// 		os.Getenv("RABBITMQ_HOST") + ":" +
-	// 		os.Getenv("RABBITMQ_PORT") + "/")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// defer internal.CloseAMQPConnection(aqmpConn)
-
-	// amqpChannel, err := aqmpConn.Channel()
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// defer internal.CloseAMQPChannel(amqpChannel)
-
-	// // Declare queue
-	// queue, err := internal.QueueDeclare(amqpChannel, os.Getenv("RABBITMQ_QUEUE_NAME"), true, false, false, false)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// msgsChan, err := amqpChannel.Consume(
-	// 	queue.Name, // queueConsume
-	// 	"",         // consumer
-	// 	false,       // auto-ack
-	// 	false,      // exclusive
-	// 	false,      // no-local
-	// 	false,      // no-wait
-	// 	nil,        // args
-	// )
-
-	// if err != nil {
-	// 	log.Printf("Failed to register a consumer: %s", err)
-	// 	panic(err)
-	// }
-
-	// Create RabbitMQ connection
-	// queue = &internal.RabbitMQ{} // Use RedisQueue or KafkaQueue later
-
-	// start with new rabbitmq
 	var queue internal.MessageQueue = &internal.RabbitMQ{}
 
 	err := queue.Connect("amqp://" + 
@@ -73,6 +29,7 @@ func main() {
 		log.Fatalf("Failed to connect to message queue: %v", err)
 	}
 	defer queue.Close()
+	
 
 	queueName := os.Getenv("RABBITMQ_QUEUE_NAME")
 	log.Printf(queueName)
@@ -80,8 +37,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to consume: %v", err)
 	}
-	// Done
-
 
 	// urlExample := "postgres://username:password@localhost:5432/database_name"
 	conn, err := pgx.Connect(context.Background(), fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
@@ -143,6 +98,7 @@ func main() {
 
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
+		
 		go func(workerID int, waitGroup *sync.WaitGroup) {
 			defer waitGroup.Done()
 			log.Printf("Worker %d started", workerID)

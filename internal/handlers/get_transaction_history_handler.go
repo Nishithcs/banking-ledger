@@ -32,7 +32,6 @@ type EsResponseItem struct {
 	Status                  string    `json:"status"`
 	Description             string    `json:"description,omitempty"`
 	Timestamp               time.Time `json:"timestamp"`
-	BranchCode              string    `json:"branch_code"`
 	BalanceAfterTransaction float64   `json:"balance_after_transaction"`
 }
 

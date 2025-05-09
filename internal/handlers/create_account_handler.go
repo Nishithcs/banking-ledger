@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"math/rand"
 
 	internal "github.com/Nishithcs/banking-ledger/pkg"
 	"github.com/gin-gonic/gin"
@@ -16,7 +17,6 @@ import (
 // It contains all necessary fields required to create a new bank account
 type AccountRequest struct {
 	AccountHolderName string  `json:"accountHolderName" binding:"required"` // Name of the account holder
-	BranchCode        string  `json:"branchCode" binding:"required"`        // 3-character branch code
 	InitialDeposit    float64 `json:"initialDeposit" binding:"required"`    // Initial amount to deposit
 	ReferenceID       string  `json:"referenceID"`                          // Unique identifier for tracking
 	AccountNumber	  string  `json:"accountNumber"`
@@ -73,8 +73,17 @@ func (a *AccountRequest) createAccount(ctx context.Context, messageQueue interna
 	// Generate a unique reference ID for tracking this request
 	a.ReferenceID = uuid.New().String()
 
-	randomNumber := 1000000 + time.Now().UnixNano()%9000000
-	a.AccountNumber = fmt.Sprintf("%s%07d", a.BranchCode, randomNumber%10000000)
+	// randomNumber := 1000000 + time.Now().UnixNano()%9000000
+	// a.AccountNumber = fmt.Sprintf("%s%07d", "BR1", randomNumber%10000000)
+
+    timestamp := time.Now().Unix() // This gives the number of seconds since Unix epoch (1970-01-01)
+
+    // Generate a random number between 0 and 9999
+    rand.Seed(time.Now().UnixNano()) // Seed the random number generator
+    randomNumber := rand.Intn(10000) // Random number between 0 and 9999
+
+    // Combine the timestamp and random number (truncate to ensure 10 digits)
+    a.AccountNumber = fmt.Sprintf("%08d%04d", timestamp%100000000, randomNumber) // Last 8 digits of timestamp + 4 digits of random number
 
 	// Create JSON payload
 	requestByteArray, err := json.Marshal(a)
@@ -86,18 +95,6 @@ func (a *AccountRequest) createAccount(ctx context.Context, messageQueue interna
 
 	// Publish message to RabbitMQ
 	err = messageQueue.Publish(queueName, requestByteArray)
-
-
-	// // Publish message to RabbitMQ for asynchronous processing
-	// err = internal.PublishWithContext(
-	// 	ctx,
-	// 	requestByteArray,
-	// 	amqpChannel,
-	// 	"",        // default exchange
-	// 	queueName, // routing key = queue name
-	// 	false,     // mandatory - don't require the message to be routed to a queue
-	// 	false,     // immediate - don't require immediate delivery to a consumer
-	// )
 
 	if err != nil {
 		// Handle publishing error
