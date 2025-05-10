@@ -11,7 +11,7 @@ type ProcessWorker struct {
 	MongoDbConn pkg.MongoDBClient
 }
 
-// Log the account creation transaction to Elasticsearch
+// Log the account creation transaction to Mongo DB
 type TransactionDocument struct {
 	TransactionID           string    `json:"transaction_id"  bson:"transaction_id"`
 	AccountNumber           string    `json:"account_number"  bson:"account_number"`

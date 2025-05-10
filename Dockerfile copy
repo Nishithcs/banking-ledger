@@ -1,36 +1,27 @@
 # Use the official Golang image as a base
-FROM golang:1.23.8 AS builder
+FROM golang:1.23.3 AS builder
 
 # Set working directory
 WORKDIR /app
 
-COPY go.mod go.sum ./
-
-# Set GOPROXY to direct to avoid proxy timeouts
+# Copy go.mod and go.sum files first for better caching
+# COPY go.mod go.sum ./
+# # Set GOPROXY to direct to avoid proxy timeouts
 ENV GOPROXY=direct
-# Install git for go mod download
+# # Install git for go mod download
 # RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
 #     echo "nameserver 8.8.4.4" >> /etc/resolv.conf && \
-
 # RUN apt-get update && apt-get install -y git ca-certificates && \
 #     go mod download
 
 
-RUN go mod download
+# RUN go mod download
 
 # Copy the source code
 COPY . .
 
 # Build the application
 # RUN CGO_ENABLED=0 GOOS=linux go build -o main .
-
-
-# Build API binary
-RUN CGO_ENABLED=0 GOOS=linux go build -o api ./cmd/api
-
-# Build Worker binary
-RUN CGO_ENABLED=0 GOOS=linux go build -o worker ./cmd/worker
-
 
 # Use a smaller image for the final container
 FROM alpine:latest

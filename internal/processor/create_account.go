@@ -15,7 +15,7 @@ type CreateAccountProcessor struct {
 // AccountData represents the data needed to create a new account
 type AccountData struct {
 	AccountNumber     string  `json:"accountNumber"`
-	AccountHolderName string  `json:"accountHolderName"`
+	Name              string  `json:"name"`
 	InitialDeposit    float64 `json:"initialDeposit"`
 	ReferenceID       string  `json:"referenceID"`
 }
@@ -43,7 +43,7 @@ func (p *CreateAccountProcessor) CreateAccount(ctx context.Context) error {
 		ctx,
 		query,
 		p.Data.AccountNumber,
-		p.Data.AccountHolderName,
+		p.Data.Name,
 		p.Data.InitialDeposit,
 		"ACTIVE",
 		now,

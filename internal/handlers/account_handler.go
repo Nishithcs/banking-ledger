@@ -16,7 +16,7 @@ import (
 // AccountRequest represents the data structure for account creation requests
 // It contains all necessary fields required to create a new bank account
 type AccountRequest struct {
-	AccountHolderName string  `json:"accountHolderName" binding:"required"` // Name of the account holder
+	Name              string  `json:"name"           binding:"required"` // Name of the account holder
 	InitialDeposit    float64 `json:"initialDeposit" binding:"required"`    // Initial amount to deposit
 	ReferenceID       string  `json:"referenceID"`                          // Unique identifier for tracking
 	AccountNumber	  string  `json:"accountNumber"`

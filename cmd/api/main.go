@@ -13,13 +13,12 @@ import (
 )
 
 func main() {
-	// Standard Go context for graceful shutdowns and DB calls
 	ctx := context.Background()
 
 	// Initialize Gin router
 	router := setupRouter()
 
-	// Setup dependencies
+	// Setup dependencies 
 	queue := setupRabbitMQ()
 	defer queue.Close()
 
