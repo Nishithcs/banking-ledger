@@ -28,8 +28,8 @@ func main() {
 	defer db.Close(ctx)
 
 	// Register routes
-	router.POST("/accounts", handlers.CreateAccount(ctx, queue, "account_creator"))
-	router.POST("/transactions", handlers.CreateTransaction(ctx, queue, "transaction_processor"))
+	router.POST("/accounts", handlers.CreateAccount(ctx, queue, "account"))
+	router.POST("/transactions", handlers.CreateTransaction(ctx, queue, "transaction"))
 	router.GET("/accounts/:accountNumber/transactions", handlers.GetTransactions(ctx, mongoClient))
 	router.GET("/account/:accountNumber/status", handlers.GetAccountStatus(ctx, db, mongoClient))
 

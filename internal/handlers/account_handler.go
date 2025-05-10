@@ -13,30 +13,12 @@ import (
 	"github.com/google/uuid"
 )
 
-// AccountRequest represents the data structure for account creation requests
-// It contains all necessary fields required to create a new bank account
-type AccountRequest struct {
-	Name              string  `json:"name"           binding:"required"` // Name of the account holder
-	InitialDeposit    float64 `json:"initialDeposit" binding:"required"`    // Initial amount to deposit
-	ReferenceID       string  `json:"referenceID"`                          // Unique identifier for tracking
-	AccountNumber	  string  `json:"accountNumber"`
-}
-
-// accountResponse represents the response structure sent back to clients
-// after a successful account creation request
-type accountResponse struct {
-	ReferenceID string    `json:"referenceID"` // Unique identifier for tracking the request
-	AccountNumber   string    `json:"AccountNumber"`   // Account ID for tracking the account
-	CreatedAt   time.Time `json:"createdAt"`   // Timestamp when the account creation request was processed
-}
-
-// CreateAccount creates a new HTTP handler for account creation requests
-// It takes a context, an AMQP channel, and a queue name for message publishing
-// Returns a gin.HandlerFunc that can be registered with the router
+// CreateAccount creates a new Account Number and pushes the task to the queue. 
+// The worker will do rest of the account creation.
 func CreateAccount(ctx context.Context, messageQueue pkg.MessageQueue, queueName string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var accountRequestJson AccountRequest
-		// Parse and validate the incoming JSON request
+
 		if err := c.ShouldBindJSON(&accountRequestJson); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"errorCode": http.StatusBadRequest,
@@ -69,7 +51,7 @@ func CreateAccount(ctx context.Context, messageQueue pkg.MessageQueue, queueName
 // 1. Generating a unique reference ID
 // 2. Publishing the request to a message queue for asynchronous processing
 // 3. Returning a response with tracking information
-func (a *AccountRequest) createAccount(ctx context.Context, messageQueue pkg.MessageQueue, queueName string) (accountResponse, error) {
+func (a *AccountRequest) createAccount(ctx context.Context, messageQueue pkg.MessageQueue, queueName string) (AccountResponse, error) {
 	// Generate a unique reference ID for tracking this request
 	a.ReferenceID = uuid.New().String()
 
@@ -85,7 +67,7 @@ func (a *AccountRequest) createAccount(ctx context.Context, messageQueue pkg.Mes
 	requestByteArray, err := json.Marshal(a)
 	if err != nil {
 		// Handle marshaling error
-		return accountResponse{}, err
+		return AccountResponse{}, err
 	}
 
 	// Publish message to RabbitMQ
@@ -93,11 +75,11 @@ func (a *AccountRequest) createAccount(ctx context.Context, messageQueue pkg.Mes
 
 	if err != nil {
 		// Handle publishing error
-		return accountResponse{}, err
+		return AccountResponse{}, err
 	}
 
 	// Return response with tracking ID and timestamp
-	return accountResponse{
+	return AccountResponse{
 		AccountNumber: a.AccountNumber,
 		ReferenceID: a.ReferenceID,
 		CreatedAt:   time.Now(),

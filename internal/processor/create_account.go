@@ -7,19 +7,6 @@ import (
 	"time"
 )
 
-type CreateAccountProcessor struct {
-	ProcessWorker
-	Data AccountData
-}
-
-// AccountData represents the data needed to create a new account
-type AccountData struct {
-	AccountNumber     string  `json:"accountNumber"`
-	Name              string  `json:"name"`
-	InitialDeposit    float64 `json:"initialDeposit"`
-	ReferenceID       string  `json:"referenceID"`
-}
-
 // CreateAccount creates a new account in the database
 func (p *CreateAccountProcessor) CreateAccount(ctx context.Context) error {
 

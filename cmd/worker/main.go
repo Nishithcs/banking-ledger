@@ -21,6 +21,7 @@ func main() {
 	defer queue.Close()
 
 	mongoClient := setupMongoDB(ctx)
+	defer mongoClient.Close(ctx)
 
 	db := setupPostgres(ctx)
 	defer db.Close(ctx)
@@ -34,7 +35,7 @@ func main() {
 	numWorkers := getWorkerCount()
 	wg := sync.WaitGroup{}
 
-	log.Printf(" [*] Starting %d workers for queue '%s'...", numWorkers, queueName)
+	log.Printf("→ Launching %d worker(s) on queue: '%s'", numWorkers, queueName)
 
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
@@ -84,14 +85,14 @@ func getWorkerCount() int {
 	if val, err := strconv.Atoi(os.Getenv("NUM_WORKERS")); err == nil && val > 0 {
 		return val
 	}
-	return 4
+	return 2
 }
 
 // ----------------- WORKER --------------------
 
 func startWorker(ctx context.Context, workerID int, msgs <-chan []byte, 
 	queueName string, database pkg.Database, mongoClient pkg.MongoDBClient, wg *sync.WaitGroup) {
-		
+
 	defer wg.Done()
 	log.Printf("Worker %d started", workerID)
 
@@ -99,7 +100,7 @@ func startWorker(ctx context.Context, workerID int, msgs <-chan []byte,
 		log.Printf("Worker %d received message: %s", workerID, msg)
 
 		switch queueName {
-		case "account_creator":
+		case "account":
 			var account processor.AccountData
 			if err := json.Unmarshal(msg, &account); err != nil {
 				log.Printf("Worker %d: JSON decode error: %v", workerID, err)
@@ -118,7 +119,7 @@ func startWorker(ctx context.Context, workerID int, msgs <-chan []byte,
 				log.Printf("Worker %d: Account creation failed: %v", workerID, err)
 			}
 
-		case "transaction_processor":
+		case "transaction":
 			var txn processor.TransactionData
 			if err := json.Unmarshal(msg, &txn); err != nil {
 				log.Printf("Worker %d: JSON decode error: %v", workerID, err)

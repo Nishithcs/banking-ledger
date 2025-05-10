@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/Nishithcs/banking-ledger/internal/processor"
 	"github.com/Nishithcs/banking-ledger/pkg"
@@ -11,25 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-// TransactionHistoryItem represents a single transaction in the history
-type TransactionHistoryItem struct {
-	TransactionID           string    `json:"id"`
-	Amount                  float64   `json:"amount"`
-	TransactionType         string    `json:"type"`
-	Status                  string    `json:"status"`
-	Timestamp               time.Time `json:"timestamp"`
-	Balance                 float64   `json:"balance"`
-	Description             string    `json:"description,omitempty"`
-}
-
-// TransactionHistoryResponse represents the response structure for transaction history
-type TransactionHistoryResponse struct {
-	AccountNumber string                   `json:"accountNumber"`
-	Transactions  []TransactionHistoryItem `json:"transactions"`
-	TotalCount    int                      `json:"totalCount"`
-}
-
-// GetTransactions returns a handler for querying transaction history
+// GetTransactions returns the list of transactions made for an account
 func GetTransactions(ctx context.Context, mongoDbClient pkg.MongoDBClient) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accountNumber := c.Param("accountNumber")
@@ -55,7 +36,6 @@ func GetTransactions(ctx context.Context, mongoDbClient pkg.MongoDBClient) gin.H
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "No cursor returned"})
 			return
 		}
-
 		defer cursor.Close(ctx)
 
 		var results []processor.TransactionDocument
@@ -75,9 +55,8 @@ func GetTransactions(ctx context.Context, mongoDbClient pkg.MongoDBClient) gin.H
 				TransactionType:         tx.Type,
 				Status:                  tx.Status,
 				Timestamp:               tx.Timestamp,
-				Balance: tx.Balance,
+				Balance:                 tx.Balance,
 			}
-
 			transactions = append(transactions, transactionHistoryItem)
 		}
 

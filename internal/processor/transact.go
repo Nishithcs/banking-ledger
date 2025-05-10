@@ -7,20 +7,6 @@ import (
 	"time"
 )
 
-type TransactionProcessor struct {
-	ProcessWorker
-	Data TransactionData
-}
-
-// TransactionData represents the data needed for a transaction
-type TransactionData struct {
-	AccountNumber     string  `json:"accountNumber"`
-	Amount            float64 `json:"amount"`
-	AvailableBalance  float64 `json:"availableBalance"`
-	Type              string  `json:"type"`
-	TransactionID     string  `json:"transactionId"`
-}
-
 func (p *TransactionProcessor) transact(ctx context.Context) error {
 	// Start a transaction
 	tx, err := p.Database.Begin(ctx)
@@ -29,7 +15,7 @@ func (p *TransactionProcessor) transact(ctx context.Context) error {
 	}
 	defer tx.Rollback(ctx) // Will be ignored if transaction is committed
 
-	// Get current account balance
+	// Get current account balance. For update to avoid race conditions
 	var currentBalance float64
 	query := `SELECT balance FROM accounts 
 	WHERE account_number = $1 AND status='ACTIVE' FOR UPDATE;`

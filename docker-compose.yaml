@@ -9,6 +9,14 @@ services:
       - RABBITMQ_DEFAULT_PASS=guest
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - app_net
+    # To avoid API/WORKERS starting before rabbitmq service comes up we use the health check
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   postgres:
     image: postgres:17
@@ -21,6 +29,15 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - app_net
+    # To avoid API/WORKERS starting before postgres service comes up we use the health check
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 
   mongodb:
     image: mongo:latest
@@ -31,11 +48,14 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=mypassword
     volumes:
       - mongodb_data:/data/db
+    networks:
+      - app_net
 
   api:
     build:
       context: .
       dockerfile: Dockerfile
+      network: host
     ports:
       - "8080:8080"
     command: ["./app/cmd/api/api"]
@@ -49,15 +69,23 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=guest
       - RABBITMQ_PASSWORD=guest
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     dns:
       - 8.8.8.8
       - 8.8.4.4
+    networks:
+      - app_net
 
   worker:
     build:
       context: .
       dockerfile: Dockerfile
-    # command: ["./app/cmd/worker/worker"]
+      network: host
+    command: ["./app/cmd/worker/worker"]
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -68,14 +96,25 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=guest
       - RABBITMQ_PASSWORD=guest
-      - RABBITMQ_QUEUE_NAME=account_creator
-      - NUM_WORKERS=4
+      - RABBITMQ_QUEUE_NAME=account
+      - NUM_WORKERS=2
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    networks:
+      - app_net
 
   transaction_processor:
     build:
       context: .
       dockerfile: Dockerfile
-    # command: ["./app/cmd/worker/worker"]
+      network: host
+    command: ["./app/cmd/worker/worker"]
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -86,8 +125,18 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=guest
       - RABBITMQ_PASSWORD=guest
-      - RABBITMQ_QUEUE_NAME=transaction_processor
-      - NUM_WORKERS=4
+      - RABBITMQ_QUEUE_NAME=transaction
+      - NUM_WORKERS=2
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    networks:
+      - app_net
 
   swagger-ui:
     image: swaggerapi/swagger-ui:latest
@@ -97,8 +146,14 @@ services:
       - URL=banking-ledger/api/docs/openapi.yaml
     volumes:
       - ./:/usr/share/nginx/html/banking-ledger
+    networks:
+      - app_net
 
 volumes:
   rabbitmq_data:
   postgres_data:
   mongodb_data:
+
+
+networks:
+  app_net:

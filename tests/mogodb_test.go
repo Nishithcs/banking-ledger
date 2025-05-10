@@ -17,10 +17,6 @@ func (m *MockMongoDBClient) Insert(ctx context.Context, collection string, docum
 	return args.Get(0).(*mongo.InsertOneResult), args.Error(1)
 }
 
-// func (m *MockMongoDBClient) Find(ctx context.Context, collection string, filter interface{}) (*mongo.Cursor, error) {
-// 	args := m.Called(ctx, collection, filter)
-// 	return args.Get(0).(*mongo.Cursor), args.Error(1)
-// }
 func (m *MockMongoDBClient) Find(ctx context.Context, collection string, filter interface{}) (*mongo.Cursor, error) {
 	args := m.Called(ctx, collection, filter)
 

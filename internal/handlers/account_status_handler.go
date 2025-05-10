@@ -8,12 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// AccountStatusResponse represents the response structure for account status
-type AccountStatusResponse struct {
-	Status        string `json:"status"`
-	AccountNumber string `json:"accountNumber,omitempty"`
-}
-
 // GetAccountStatus handles requests to check account creation status
 func GetAccountStatus(ctx context.Context, database pkg.Database, mongoDbClient pkg.MongoDBClient) gin.HandlerFunc {
 	
@@ -40,7 +34,9 @@ func GetAccountStatus(ctx context.Context, database pkg.Database, mongoDbClient 
 				"error":     "Account creation request not found",
 			})
 		}
-		defer tx.Rollback(ctx) // Will be ignored if transaction is committed
+
+		// Will be ignored if transaction is committed
+		defer tx.Rollback(ctx) 
 
 		var status string
 

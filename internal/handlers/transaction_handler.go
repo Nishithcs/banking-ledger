@@ -12,21 +12,13 @@ import (
 	"github.com/google/uuid"
 )
 
-// TransactionRequest represents the data structure for transaction requests
-// It contains all necessary fields required to process a transaction
+// TransactionRequest represents the transaction request data structure
 type TransactionRequest struct {
 	AccountNumber   string  `json:"accountNumber" binding:"required"` // Account number for the transaction
 	Amount          float64 `json:"amount" binding:"required"`        // Amount to debit or credit
 	TransactionType string  `json:"type" binding:"required"`          // Type of transaction (debit/credit)
 	Description     string  `json:"description"`                      // Optional description
 	TransactionID   string  `json:"transactionId"`                    // Unique identifier for tracking
-}
-
-// transactionResponse represents the response structure sent back to clients
-// after a successful transaction request
-type transactionResponse struct {
-	TransactionID string    `json:"transactionID"` // Unique ID for the transaction
-	CreatedAt     time.Time `json:"createdAt"`     // Timestamp when the transaction request was processed
 }
 
 // CreateTransaction creates a new HTTP handler for transaction requests
@@ -68,7 +60,7 @@ func CreateTransaction(ctx context.Context, messageQueue pkg.MessageQueue, queue
 // 1. Generating unique reference and transaction IDs
 // 2. Publishing the request to a message queue for asynchronous processing
 // 3. Returning a response with tracking information
-func (t *TransactionRequest) createTransaction(ctx context.Context, messageQueue pkg.MessageQueue, queueName string) (transactionResponse, error) {
+func (t *TransactionRequest) createTransaction(ctx context.Context, messageQueue pkg.MessageQueue, queueName string) (TransactionResponse, error) {
 
 	// Generate a unique transaction ID
 	transactionID := uuid.New().String()
@@ -80,7 +72,7 @@ func (t *TransactionRequest) createTransaction(ctx context.Context, messageQueue
 	if err != nil {
 		// Handle marshaling error
 		fmt.Printf("Error while marshalling transaction request: %s", err.Error())
-		return transactionResponse{}, err
+		return TransactionResponse{}, err
 	}
 	
 	// Publish message to RabbitMQ
@@ -89,11 +81,11 @@ func (t *TransactionRequest) createTransaction(ctx context.Context, messageQueue
 	if err != nil {
 		// Handle publishing error
 		fmt.Printf("Error while publishing transaction request to queue: %s", err.Error())
-		return transactionResponse{}, err
+		return TransactionResponse{}, err
 	}
 
 	// Return response with tracking information
-	return transactionResponse{
+	return TransactionResponse{
 		TransactionID: transactionID,
 		CreatedAt:     time.Now(),
 	}, nil
