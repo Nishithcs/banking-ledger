@@ -85,7 +85,6 @@ func (a *AccountRequest) createAccount(ctx context.Context, messageQueue pkg.Mes
 	requestByteArray, err := json.Marshal(a)
 	if err != nil {
 		// Handle marshaling error
-		fmt.Printf("Error while Marshalling account request %s", err.Error())
 		return accountResponse{}, err
 	}
 
@@ -94,7 +93,6 @@ func (a *AccountRequest) createAccount(ctx context.Context, messageQueue pkg.Mes
 
 	if err != nil {
 		// Handle publishing error
-		fmt.Printf("Error while Publishing account request to queue %s", err.Error())
 		return accountResponse{}, err
 	}
 

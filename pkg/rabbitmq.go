@@ -53,28 +53,6 @@ func (r *RabbitMQ) Consume(queue string) (<-chan []byte, error) {
 	return out, nil
 }
 
-
-// func (r *RabbitMQ) Consume(queue string) (<-chan amqp.Delivery, error) {
-// 	_, err := r.ch.QueueDeclare(queue, true, false, false, false, nil)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	deliveries, err := r.ch.Consume(queue, "", false, false, false, false, nil)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return deliveries, nil
-// 	// out := make(chan []byte)
-// 	// go func() {
-// 	// 	for msg := range deliveries {
-// 	// 		out <- msg.Body
-// 	// 	}
-// 	// }()
-// 	// return out, nil
-// }
-
 func (r *RabbitMQ) Close() error {
 	if r.ch != nil {
 		r.ch.Close()
@@ -94,3 +72,5 @@ func AmqpURL() string {
 
     return fmt.Sprintf("amqp://%s:%s@%s:%s/", user, password, host, port)
 }
+
+

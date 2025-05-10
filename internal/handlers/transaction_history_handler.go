@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -42,7 +41,6 @@ func GetTransactions(ctx context.Context, mongoDbClient pkg.MongoDBClient) gin.H
 			return
 		}
 		
-		// Mongo Db changes
 		filter := bson.M{"account_number": accountNumber}
 
 		cursor, err := mongoDbClient.Find(ctx, "transactions", filter)
@@ -52,6 +50,12 @@ func GetTransactions(ctx context.Context, mongoDbClient pkg.MongoDBClient) gin.H
 				"error":     "Failed to search transaction history: " + err.Error(),
 			})
 		}
+
+		if cursor == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "No cursor returned"})
+			return
+		}
+
 		defer cursor.Close(ctx)
 
 		var results []processor.TransactionDocument
@@ -60,10 +64,6 @@ func GetTransactions(ctx context.Context, mongoDbClient pkg.MongoDBClient) gin.H
 				"errorCode": http.StatusInternalServerError,
 				"error":     "Failed to search transaction history: " + err.Error(),
 			})
-		}
-
-		for _, tx := range results {
-			fmt.Printf("Transaction: %+v\n", tx)
 		}
 
 		// Extract transactions from the response
@@ -80,8 +80,6 @@ func GetTransactions(ctx context.Context, mongoDbClient pkg.MongoDBClient) gin.H
 
 			transactions = append(transactions, transactionHistoryItem)
 		}
-
-		// mongo changes done
 
 		// Build the response
 		response := TransactionHistoryResponse{

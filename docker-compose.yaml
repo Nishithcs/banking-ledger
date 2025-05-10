@@ -49,6 +49,9 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=guest
       - RABBITMQ_PASSWORD=guest
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
 
   worker:
     build:
