@@ -47,9 +47,10 @@ func GetAccountStatus(ctx context.Context, database pkg.Database, mongoDbClient 
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{
 				"errorCode": http.StatusNotFound,
-				"error":     "Account creation request not found",
+				"error":     "Account Number does not exist",
 				"account_number": accountNumber,
 			})
+			return
 		}
 		response.Status = status
 

@@ -9,21 +9,14 @@ COPY go.mod go.sum ./
 # Set GOPROXY to direct to avoid proxy timeouts
 # ENV GOPROXY=off
 ENV GOPROXY=https://proxy.golang.org,direct
-# Install git for go mod download
-# RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
-#     echo "nameserver 8.8.4.4" >> /etc/resolv.conf && \
+
 
 RUN apt-get update && apt-get install -y git ca-certificates
-#     go mod download
-
 
 RUN go mod download
 
 # Copy the source code
 COPY . .
-
-# Build the application
-# RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 
 
 # Build API binary

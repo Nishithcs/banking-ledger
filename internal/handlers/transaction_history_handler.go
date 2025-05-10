@@ -70,3 +70,53 @@ func GetTransactions(ctx context.Context, mongoDbClient pkg.MongoDBClient) gin.H
 		c.JSON(http.StatusOK, response)
 	}
 }
+
+
+// GetTransactionInfo returns the transaction status of the given Transaction ID
+func GetTransactionInfo(ctx context.Context, mongoDbClient pkg.MongoDBClient) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		transactionId := c.Param("transactionId")
+		if transactionId == "" {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"errorCode": http.StatusBadRequest,
+				"error":     "Transaction ID is required",
+			})
+			return
+		}
+		
+		filter := bson.M{"transaction_id": transactionId}
+
+		cursor, err := mongoDbClient.Find(ctx, "transactions", filter)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"errorCode": http.StatusInternalServerError,
+				"error":     "Failed to search transaction history: " + err.Error(),
+			})
+		}
+
+		if cursor == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "No cursor returned"})
+			return
+		}
+		defer cursor.Close(ctx)
+
+		var results []processor.TransactionDocument
+		if err = cursor.All(ctx, &results); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"errorCode": http.StatusInternalServerError,
+				"error":     "Failed to search transaction history: " + err.Error(),
+			})
+		}
+
+		response := TransactionHistoryItem{
+			TransactionID:           results[0].TransactionID,
+			Amount:                  results[0].Amount,
+			TransactionType:         results[0].Type,
+			Status:                  results[0].Status,
+			Timestamp:               results[0].Timestamp,
+			Balance:                 results[0].Balance,
+		}
+
+		c.JSON(http.StatusOK, response)
+	}
+}

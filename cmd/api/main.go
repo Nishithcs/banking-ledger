@@ -30,8 +30,9 @@ func main() {
 	// Register routes
 	router.POST("/accounts", handlers.CreateAccount(ctx, queue, "account"))
 	router.POST("/transactions", handlers.CreateTransaction(ctx, queue, "transaction"))
-	router.GET("/accounts/:accountNumber/transactions", handlers.GetTransactions(ctx, mongoClient))
 	router.GET("/account/:accountNumber/status", handlers.GetAccountStatus(ctx, db, mongoClient))
+	router.GET("/transaction/:transactionId/status", handlers.GetTransactionInfo(ctx, mongoClient))
+	router.GET("/accounts/:accountNumber/transactions", handlers.GetTransactions(ctx, mongoClient))
 
 	// Run the server
 	if err := router.Run(":8080"); err != nil {

@@ -58,7 +58,7 @@ services:
       network: host
     ports:
       - "8080:8080"
-    command: ["./app/cmd/api/api"]
+    command: ["./app/api"]
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -85,7 +85,7 @@ services:
       context: .
       dockerfile: Dockerfile
       network: host
-    command: ["./app/cmd/worker/worker"]
+    command: ["./app/worker"]
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -114,7 +114,7 @@ services:
       context: .
       dockerfile: Dockerfile
       network: host
-    command: ["./app/cmd/worker/worker"]
+    command: ["./app/worker"]
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432

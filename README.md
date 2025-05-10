@@ -14,7 +14,7 @@ Base URL: `http://localhost:8080`
 **Request:**
 ```json
 {
-  "accountHolderName": "qqqqq",
+  "name": "Virat Kohli",
   "initialDeposit": 1000
 }
 ```
@@ -24,15 +24,15 @@ Base URL: `http://localhost:8080`
 curl -X POST http://localhost:8080/accounts \
   -H "Content-Type: application/json" \
   -d '{
-        "accountHolderName": "qqqqq",
+        "name": "Virat Kohli",
         "initialDeposit": 1000
-      }'
+      }' | jq
 ```
 
 **Response:**
 ```json
 {
-  "accountNumber": "8225565849",
+  "accountNumber": "9080900634",
   "createdAt": "2025-05-09T20:29:16.680558126Z",
   "referenceID": "4af998d4-886e-4d2a-8d70-7198554e5285"
 }
@@ -40,7 +40,17 @@ curl -X POST http://localhost:8080/accounts \
 
 ---
 
-### 2. Make a Transaction  
+### 2. Get Account Status  
+**GET** `/account/:accountNumber/status`
+
+**Example:**
+```bash
+curl http://localhost:8080/account/9080900634/status | jq
+```
+
+---
+
+### 3. Make a Transaction  
 **POST** `/transactions`
 
 **Request:**
@@ -73,25 +83,23 @@ curl -X POST http://localhost:8080/transactions \
 
 ---
 
-### 3. Get All Transactions for an Account  
+### 4. Get Transactions status
+**GET** `/transaction/:transactionId/status`
+
+**Example:**
+```bash
+curl http://localhost:8080/transaction/3fa85f64-5717-4562-b3fc-2c963f66afa6/status | jq
+```
+
+---
+
+### 5. Get All Transactions for an Account  
 **GET** `/accounts/:accountNumber/transactions`
 
 **Example:**
 ```bash
-curl http://localhost:8080/accounts/8225565849/transactions
+curl http://localhost:8080/accounts/8225565849/transactions | jq
 ```
-
----
-
-### 4. Get Account Status  
-**GET** `/account/:accountNumber/status`
-
-**Example:**
-```bash
-curl http://localhost:8080/account/8225565849/status
-```
-
----
 
 ## ⚙️ Setup Instructions
 

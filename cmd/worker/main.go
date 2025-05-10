@@ -21,7 +21,7 @@ func main() {
 	defer queue.Close()
 
 	mongoClient := setupMongoDB(ctx)
-	defer mongoClient.Close(ctx)
+	defer mongoClient.Disconnect(ctx)
 
 	db := setupPostgres(ctx)
 	defer db.Close(ctx)
