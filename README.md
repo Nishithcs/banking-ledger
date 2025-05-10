@@ -91,6 +91,18 @@ curl -X POST http://localhost:8080/transactions \
 curl http://localhost:8080/transaction/3fa85f64-5717-4562-b3fc-2c963f66afa6/status | jq
 ```
 
+**Response:**
+```json
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "amount": 400,
+  "type": "DEPOSIT",
+  "status": "COMPLETED",
+  "timestamp": "2025-05-10T20:44:17.184Z",
+  "balance": 1400
+}
+```
+
 ---
 
 ### 5. Get All Transactions for an Account  
@@ -99,6 +111,41 @@ curl http://localhost:8080/transaction/3fa85f64-5717-4562-b3fc-2c963f66afa6/stat
 **Example:**
 ```bash
 curl http://localhost:8080/accounts/8225565849/transactions | jq
+```
+
+**Response:**
+```json
+{
+  "accountNumber": "8225565849",
+  "transactions": [
+    {
+      "id": "4af998d4-886e-4d2a-8d70-7198554e5285",
+      "amount": 1000,
+      "type": "DEPOSIT",
+      "status": "COMPLETED",
+      "timestamp": "2025-05-09T20:29:16.681Z",
+      "balance": 1000
+    },
+    {
+      "id": "551fd5f7-4e83-45c4-86b3-23f76e830a71",
+      "amount": 400,
+      "type": "DEPOSIT",
+      "status": "COMPLETED",
+      "timestamp": "2025-05-09T20:29:44.366Z",
+      "balance": 1400
+    },
+    {
+      "id": "c45765ed-29c7-42ba-a2b3-9f159ae0bcdd",
+      "amount": 400,
+      "type": "DEPOSIT",
+      "status": "FAILED",
+      "timestamp": "2025-05-10T19:24:46.574Z",
+      "balance": 0
+    }
+  ],
+  "totalCount": 3
+}
+
 ```
 
 ## ⚙️ Setup Instructions
