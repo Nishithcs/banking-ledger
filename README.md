@@ -1,4 +1,4 @@
-# 🏦 Banking Ledger API
+# Banking Ledger API
 
 A simple banking ledger system built with Go, PostgreSQL, MongoDB, and RabbitMQ. It allows you to create accounts, make transactions, and query account and transaction details through a clean RESTful API.
 
@@ -32,7 +32,7 @@ docker compose logs -f
 
 ---
 
-## 📌 API Endpoints
+## API Endpoints
 
 Base URL: `http://localhost:8080`
 
@@ -83,10 +83,18 @@ curl http://localhost:8080/account/9080900634/status
 
 **Request:**
 ```json
+// Deposit
 {
   "accountNumber": "8225565849",
   "amount": 400,
   "type": "DEPOSIT"
+}
+
+// Withdraw
+{
+  "accountNumber": "8225565849",
+  "amount": 200,
+  "type": "WITHDRAWAL"
 }
 ```
 
@@ -176,15 +184,20 @@ curl http://localhost:8080/accounts/8225565849/transactions
 
 ```
 
-## 🧱 System Architecture
+## System Architecture
 
-The system is composed of multiple decoupled components:
+The system follows a modular, decoupled architecture comprising the following components:
 
-- **API Service**: RESTful API to handle client interactions.
-- **Account Creator Worker**: Listens to account creation events via RabbitMQ.
-- **Transaction Processor Worker**: Handles transaction requests asynchronously.
-- **PostgreSQL**: Stores persistent account data.
-- **MongoDB**: Stores transaction history optimized for reads.
-- **RabbitMQ**: Message broker for asynchronous processing.
+- **API Service**: Exposes RESTful endpoints for Frontend application interactions and request handling.
+
+- **Account Creator Worker**: Subscribes to RabbitMQ queues to process account creation events asynchronously.
+
+- **Transaction Processor Worker**: Handles transaction requests in the background via message queues.
+
+- **PostgreSQL**: Acts as the primary data store for persistent account-related data.
+
+- **MongoDB**: Stores transaction history, optimized for high-performance read operations.
+
+- **RabbitMQ**: Serves as the message broker enabling asynchronous communication between services.
 
 ---
