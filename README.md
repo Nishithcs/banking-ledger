@@ -5,7 +5,7 @@ A simple banking ledger system built with Go, PostgreSQL, MongoDB, and RabbitMQ.
 ---
 
 ## ⚙️ Setup Instructions
-
+cd te 
 ### 1. Clone the Repository
 ```bash
 git clone https://github.com/Nishithcs/banking-ledger.git
