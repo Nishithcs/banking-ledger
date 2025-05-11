@@ -4,6 +4,34 @@ A simple banking ledger system built with Go, PostgreSQL, MongoDB, and RabbitMQ.
 
 ---
 
+## ⚙️ Setup Instructions
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/Nishithcs/banking-ledger.git
+cd banking-ledger
+```
+
+### 2. Start the Services Using Docker Compose
+```bash
+docker compose up -d
+```
+
+This will spin up the following services:
+- API Service
+- Account Creator Worker
+- Transaction Processor Worker
+- PostgreSQL
+- MongoDB
+- RabbitMQ
+
+### 3. Check Logs
+```bash
+docker compose logs -f
+```
+
+---
+
 ## 📌 API Endpoints
 
 Base URL: `http://localhost:8080`
@@ -26,7 +54,7 @@ curl -X POST http://localhost:8080/accounts \
   -d '{
         "name": "Virat Kohli",
         "initialDeposit": 1000
-      }' | jq
+      }'
 ```
 
 **Response:**
@@ -45,7 +73,7 @@ curl -X POST http://localhost:8080/accounts \
 
 **Example:**
 ```bash
-curl http://localhost:8080/account/9080900634/status | jq
+curl http://localhost:8080/account/9080900634/status
 ```
 
 ---
@@ -88,7 +116,7 @@ curl -X POST http://localhost:8080/transactions \
 
 **Example:**
 ```bash
-curl http://localhost:8080/transaction/3fa85f64-5717-4562-b3fc-2c963f66afa6/status | jq
+curl http://localhost:8080/transaction/3fa85f64-5717-4562-b3fc-2c963f66afa6/status
 ```
 
 **Response:**
@@ -110,7 +138,7 @@ curl http://localhost:8080/transaction/3fa85f64-5717-4562-b3fc-2c963f66afa6/stat
 
 **Example:**
 ```bash
-curl http://localhost:8080/accounts/8225565849/transactions | jq
+curl http://localhost:8080/accounts/8225565849/transactions
 ```
 
 **Response:**
@@ -147,34 +175,6 @@ curl http://localhost:8080/accounts/8225565849/transactions | jq
 }
 
 ```
-
-## ⚙️ Setup Instructions
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/Nishithcs/banking-ledger.git
-cd banking-ledger
-```
-
-### 2. Start the Services Using Docker Compose
-```bash
-docker compose up -d
-```
-
-This will spin up the following services:
-- API Service
-- Account Creator Worker
-- Transaction Processor Worker
-- PostgreSQL
-- MongoDB
-- RabbitMQ
-
-### 3. Check Logs
-```bash
-docker compose logs -f
-```
-
----
 
 ## 🧱 System Architecture
 
